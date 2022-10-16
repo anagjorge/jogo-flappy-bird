@@ -5,6 +5,8 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -12,6 +14,8 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.utils.viewport.StretchViewport;
+import com.badlogic.gdx.utils.viewport.Viewport;
 
 import java.util.Random;
 
@@ -23,7 +27,6 @@ public class jogo extends ApplicationAdapter {
     private Texture canoBaixo;
     private Texture canoTopo;
     private Texture gameOver;
-
 
     private ShapeRenderer shapeRenderer;
     private Circle circuloPassaro;
@@ -55,11 +58,14 @@ public class jogo extends ApplicationAdapter {
     Sound somPontuacao;
 
     Preferences preferences;
-
-
+    private OrthographicCamera camera;
+    private Viewport viewport;
+    private final float VIRTUAL_WIDTH = 720;
+    private final float VIRTUAL_HEIGHT = 1280;
 
     @Override
     public void create() {
+
         inicializarTexturas();
         inicializarObjetos();
 
@@ -67,13 +73,12 @@ public class jogo extends ApplicationAdapter {
 
     @Override
     public void render() {
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BITS);
         verificarEstadoJogo();
         validarPontos();
         desenharObjetos();
         detectarColisoes();
     }
-
-
 
     private void verificarEstadoJogo() {
 
@@ -87,6 +92,7 @@ public class jogo extends ApplicationAdapter {
         } else if (estadoJogo == 1) {
             if (toqueTela) {
                 gravidade = -15;
+                somVoando.play();
             }
 
             posicaoCanoHorizontal -= Gdx.graphics.getDeltaTime() * 200;
@@ -104,6 +110,7 @@ public class jogo extends ApplicationAdapter {
             if(pontos > pontuacaoMaxima){
                 pontuacaoMaxima = pontos;
                 preferences.putInteger("pontuacaoMaxima", pontuacaoMaxima);
+                preferences.flush();
             }
             posicaoHorizontal -= Gdx.graphics.getDeltaTime() * 500;
 
@@ -111,6 +118,7 @@ public class jogo extends ApplicationAdapter {
                 estadoJogo = 0;
                 pontos = 0;
                 gravidade = 0;
+                posicaoHorizontal = 0;
                 posicaoInicialVertical = alturaDispositivo / 2;
                 posicaoCanoHorizontal = larguraDispositivo;
 
@@ -155,10 +163,11 @@ public class jogo extends ApplicationAdapter {
 
     private void desenharObjetos() {
 
+        batch.setProjectionMatrix(camera.combined);
+
         batch.begin();
         batch.draw(fundo, 0, 0, larguraDispositivo, alturaDispositivo);
         batch.draw(passaros[(int) variacao], 50 + posicaoHorizontal, posicaoInicialVertical);
-
         batch.draw(canoBaixo, posicaoCanoHorizontal, alturaDispositivo / 2
                 - canoBaixo.getHeight() - espacoEntreCanos / 2 + posicaoCanoVertical);
         batch.draw(canoTopo, posicaoCanoHorizontal, alturaDispositivo / 2
@@ -166,13 +175,15 @@ public class jogo extends ApplicationAdapter {
 
         txtPontuacao.draw(batch, String.valueOf(pontos), larguraDispositivo / 2, alturaDispositivo - 110);
 
+        if(estadoJogo == 0){
+            txtReiniciar.draw(batch, "Toque para começar a jogar!", larguraDispositivo / 2 - 140, alturaDispositivo / 2 - gameOver.getHeight() / 2);
+        }
 
         if (estadoJogo == 2) {
             batch.draw(gameOver, larguraDispositivo / 2 - gameOver.getWidth() / 2, alturaDispositivo / 2);
             txtReiniciar.draw(batch, "Toque para reiniciar!", larguraDispositivo / 2 - 140, alturaDispositivo / 2 - gameOver.getHeight() / 2);
-            txtMelhorPontuacao.draw(batch, "Seu record é: " + pontuacaoMaxima + "pontos", larguraDispositivo / 2 - 140, alturaDispositivo / 2 - gameOver.getHeight());
+            txtMelhorPontuacao.draw(batch, "Seu record é: " + pontuacaoMaxima + " pontos", larguraDispositivo / 2 - 140, alturaDispositivo / 2 - gameOver.getHeight());
         }
-
         batch.end();
     }
 
@@ -194,9 +205,8 @@ public class jogo extends ApplicationAdapter {
         batch = new SpriteBatch();
         random = new Random();
 
-
-        larguraDispositivo = Gdx.graphics.getWidth();
-        alturaDispositivo = Gdx.graphics.getHeight();
+        larguraDispositivo = VIRTUAL_WIDTH;
+        alturaDispositivo = VIRTUAL_HEIGHT;
         posicaoInicialVertical = alturaDispositivo / 2;
         posicaoCanoHorizontal = larguraDispositivo;
         espacoEntreCanos = 350;
@@ -205,9 +215,9 @@ public class jogo extends ApplicationAdapter {
         txtPontuacao.setColor(Color.WHITE);
         txtPontuacao.getData().setScale(10);
 
-        //txtIniciar = new BitmapFont();
-        //txtIniciar.setColor(Color.GREEN);
-        //txtIniciar.getData().setScale(10);
+        txtIniciar = new BitmapFont();
+        txtIniciar.setColor(Color.GREEN);
+        txtIniciar.getData().setScale(50);
 
         txtReiniciar = new BitmapFont();
         txtReiniciar.setColor(Color.GREEN);
@@ -228,6 +238,10 @@ public class jogo extends ApplicationAdapter {
 
         preferences = Gdx.app.getPreferences("flappyBird");
         pontuacaoMaxima = preferences.getInteger("pontuacaoMaxima", 0);
+
+        camera = new OrthographicCamera();
+        camera.position.set(VIRTUAL_WIDTH / 2, VIRTUAL_HEIGHT / 2, 0);
+        viewport = new StretchViewport(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, camera) ;
     }
 
     public void validarPontos() {
@@ -242,6 +256,11 @@ public class jogo extends ApplicationAdapter {
         variacao += Gdx.graphics.getDeltaTime() * 10;
         if (variacao > 3)
             variacao = 0;
+    }
+
+    @Override
+    public void resize(int width, int height) {
+        viewport.update(width, height);
     }
 
     @Override
