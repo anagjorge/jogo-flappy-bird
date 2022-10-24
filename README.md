@@ -4,5 +4,6 @@ this is a reinterpretation of the traditional flappy bird game, in which the pla
 
 
 ## Screenshots
- <img src="https://i.imgur.com/YgXUVra.png" width="316" height="500">  
+
+![Imgur](https://i.imgur.com/Jur1D7Z.gif)
 
