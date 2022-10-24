@@ -1,6 +1,6 @@
 #  Flappy Bird
 
-this is a reinterpretation of the traditional flappy bird game, in which the player scores as he passes obstacles
+This is a reinterpretation of the traditional flappy bird game, in which the player scores as he passes obstacles
 
 
 ## Screenshots
