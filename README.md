@@ -5,5 +5,6 @@ this is a reinterpretation of the traditional flappy bird game, in which the pla
 
 ## Screenshots
 
-![Imgur](https://i.imgur.com/Jur1D7Z.gif)
+<img src="https://github.com/anagjorge/jogo-flappy-bird/blob/main/demo.gif" width="277" height="500" />
+
 
